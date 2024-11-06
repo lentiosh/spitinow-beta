@@ -1,4 +1,5 @@
 'use client';
+
 import { useState } from "react";
 import GoogleAddressSearch from "@/components/google/GoogleAddressSearch";
 import { supabase } from "@/utils/supabase/client";
@@ -73,7 +74,7 @@ const AddListing = () => {
   };
 
   return (
-    <div className="min-h-screen bg-base-200 flex items-center justify-center p-4">
+    <div className="min-h-screen bg-base-300 flex items-center justify-center p-4">
       <div className="card w-full max-w-2xl bg-base-100 shadow-xl">
         <div className="card-body">
           {/* Hero section with glass effect */}

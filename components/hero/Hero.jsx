@@ -26,7 +26,7 @@ const Hero = () => {
   };
 
   return (
-    <div className="min-h-[70vh] relative overflow-hidden bg-base-100 md:min-h-[60vh]">
+    <div className="min-h-[90vh] relative overflow-hidden bg-base-100 md:min-h-[90vh]">
       {/* Background gradient - visible only on desktop */}
       <div className="hidden md:block absolute inset-0">
         <div className="absolute w-72 h-72 bg-primary/10 rounded-full blur-3xl -top-10 -left-10" />

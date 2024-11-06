@@ -25,7 +25,7 @@ module.exports = {
 	  themes: [
 		{
 		  customtheme: {
-			primary: "#00deb6", // --brand-green
+			primary: "#00dfa9", // --brand-green
 			secondary: "#1f233a", // --brand-purple
 			accent: "#ff5d5d", // --brand-red
 			neutral: "#e8edf4", // --gray-80

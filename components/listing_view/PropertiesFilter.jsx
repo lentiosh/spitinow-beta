@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 const PropertiesFilter = ({
@@ -16,11 +16,31 @@ const PropertiesFilter = ({
   const [minPrice, setMinPrice] = useState(initialFilters.minPrice || '');
   const [maxPrice, setMaxPrice] = useState(initialFilters.maxPrice || '');
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState(
-    initialFilters.propertyTypes ? initialFilters.propertyTypes.split(',') : []
+    initialFilters.propertyTypes
+      ? initialFilters.propertyTypes.split(',')
+      : []
   );
-  const [minBedrooms, setMinBedrooms] = useState(initialFilters.minBedrooms || '');
-  const [maxBedrooms, setMaxBedrooms] = useState(initialFilters.maxBedrooms || '');
-  const [addedToSite, setAddedToSite] = useState(initialFilters.addedToSite || 'Anytime');
+  const [minBedrooms, setMinBedrooms] = useState(
+    initialFilters.minBedrooms || ''
+  );
+  const [maxBedrooms, setMaxBedrooms] = useState(
+    initialFilters.maxBedrooms || ''
+  );
+  const [addedToSite, setAddedToSite] = useState(
+    initialFilters.addedToSite || 'Anytime'
+  );
+
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
   const propertyTypeOptions = [
     'Διαμέρισμα',
@@ -48,7 +68,6 @@ const PropertiesFilter = ({
       return;
     }
 
-    // Validate that prices and bedrooms are not negative
     if ((minPrice && minPrice < 0) || (maxPrice && maxPrice < 0)) {
       alert('Η τιμή δεν μπορεί να είναι αρνητική');
       return;
@@ -66,10 +85,12 @@ const PropertiesFilter = ({
     params.set('radius', radius);
     if (minPrice) params.set('minPrice', minPrice);
     if (maxPrice) params.set('maxPrice', maxPrice);
-    if (selectedPropertyTypes.length > 0) params.set('propertyTypes', selectedPropertyTypes.join(','));
+    if (selectedPropertyTypes.length > 0)
+      params.set('propertyTypes', selectedPropertyTypes.join(','));
     if (minBedrooms) params.set('minBedrooms', minBedrooms);
     if (maxBedrooms) params.set('maxBedrooms', maxBedrooms);
-    if (addedToSite && addedToSite !== 'Anytime') params.set('addedToSite', addedToSite);
+    if (addedToSite && addedToSite !== 'Anytime')
+      params.set('addedToSite', addedToSite);
 
     router.push(`/listing-view?${params.toString()}`);
     onClose();
@@ -78,13 +99,19 @@ const PropertiesFilter = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50">
-      <div className="flex items-center justify-center min-h-screen p-4">
-        <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl md:rounded-xl md:m-8">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm overflow-y-auto">
+      <div className="flex items-start justify-center min-h-screen">
+        <div
+          className="bg-white w-full h-screen md:h-auto md:max-w-3xl md:rounded-xl md:mt-8 overflow-hidden transform transition-all duration-300 ease-in-out flex flex-col"
+          style={{
+            opacity: isOpen ? 1 : 0,
+            transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
+          }}
+        >
           <div className="relative p-4 border-b">
             <h2 className="text-2xl font-bold text-center">
               Ακίνητα προς{' '}
-              <span className="bg-gradient-to-br from-green-400 to-teal-500 shadow-neumorphic text-transparent bg-clip-text font-bold">
+              <span className="bg-gradient-to-br from-green-400 to-teal-500 text-transparent bg-clip-text">
                 {propertyType}
               </span>{' '}
               σε{' '}
@@ -92,14 +119,19 @@ const PropertiesFilter = ({
                 {location}
               </span>
             </h2>
-            <button className="btn btn-ghost absolute top-2 right-2" onClick={onClose}>
+            <button
+              className="btn btn-ghost absolute top-2 right-2"
+              onClick={onClose}
+            >
               ✕
             </button>
           </div>
-          <div className="p-4 space-y-6">
+          <div className="flex-grow p-4 space-y-4 overflow-y-auto">
             {/* Ακτίνα αναζήτησης */}
             <div>
-              <label className="block text-lg font-semibold mb-1 text-center">Ακτίνα αναζήτησης (km)</label>
+              <label className="block text-lg font-semibold mb-1 text-center">
+                Ακτίνα αναζήτησης (km)
+              </label>
               <select
                 className="select select-bordered w-full"
                 value={radius}
@@ -115,7 +147,9 @@ const PropertiesFilter = ({
 
             {/* Εύρος τιμής */}
             <div>
-              <label className="block text-lg font-semibold mb-1 text-center">Εύρος τιμής (€)</label>
+              <label className="block text-lg font-semibold mb-1 text-center">
+                Εύρος τιμής (€)
+              </label>
               <div className="flex gap-2 justify-center">
                 <input
                   type="number"
@@ -139,10 +173,15 @@ const PropertiesFilter = ({
 
             {/* Τύποι ακινήτων */}
             <div>
-              <label className="block text-lg font-semibold mb-1 text-center">Τύποι ακινήτων</label>
+              <label className="block text-lg font-semibold mb-1 text-center">
+                Τύποι ακινήτων
+              </label>
               <div className="flex flex-wrap gap-2 justify-center">
                 {propertyTypeOptions.map((type) => (
-                  <label key={type} className="cursor-pointer flex items-center gap-2">
+                  <label
+                    key={type}
+                    className="cursor-pointer flex items-center gap-2"
+                  >
                     <input
                       type="checkbox"
                       className="checkbox checkbox-primary"
@@ -157,7 +196,9 @@ const PropertiesFilter = ({
 
             {/* Αριθμός υπνοδωματίων */}
             <div>
-              <label className="block text-lg font-semibold mb-1 text-center">Αριθμός υπνοδωματίων</label>
+              <label className="block text-lg font-semibold mb-1 text-center">
+                Αριθμός υπνοδωματίων
+              </label>
               <div className="flex gap-2 justify-center">
                 <input
                   type="number"
@@ -181,7 +222,9 @@ const PropertiesFilter = ({
 
             {/* Προστέθηκαν στον ιστότοπο */}
             <div>
-              <label className="block text-lg font-semibold mb-1 text-center">Προστέθηκαν στον ιστότοπο</label>
+              <label className="block text-lg font-semibold mb-1 text-center">
+                Προστέθηκαν στον ιστότοπο
+              </label>
               <select
                 className="select select-bordered w-full"
                 value={addedToSite}
@@ -196,7 +239,7 @@ const PropertiesFilter = ({
             </div>
           </div>
 
-          <div className="flex justify-end items-center p-4 border-t">
+          <div className="flex-shrink-0 flex justify-end items-center p-4 border-t">
             <button className="btn btn-secondary mr-2" onClick={onClose}>
               Ακύρωση
             </button>
