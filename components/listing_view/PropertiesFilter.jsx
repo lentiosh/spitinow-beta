@@ -1,5 +1,3 @@
-// PropertiesFilter.jsx
-
 'use client';
 
 import React, { useState } from 'react';
@@ -14,7 +12,7 @@ const PropertiesFilter = ({
 }) => {
   const router = useRouter();
 
-  const [radius, setRadius] = useState(initialFilters.radius || '0'); // In kilometers
+  const [radius, setRadius] = useState(initialFilters.radius || '0');
   const [minPrice, setMinPrice] = useState(initialFilters.minPrice || '');
   const [maxPrice, setMaxPrice] = useState(initialFilters.maxPrice || '');
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState(
@@ -23,9 +21,16 @@ const PropertiesFilter = ({
   const [minBedrooms, setMinBedrooms] = useState(initialFilters.minBedrooms || '');
   const [maxBedrooms, setMaxBedrooms] = useState(initialFilters.maxBedrooms || '');
   const [addedToSite, setAddedToSite] = useState(initialFilters.addedToSite || 'Anytime');
-  const [includeLetAgreed, setIncludeLetAgreed] = useState(initialFilters.includeLetAgreed === 'true');
 
-  const propertyTypeOptions = ['House', 'Apartment', 'Studio', 'Villa', 'Land'];
+  const propertyTypeOptions = [
+    'Διαμέρισμα',
+    'Σπίτι',
+    'Μεζονέτα',
+    'Γκαρσονιέρα',
+    'Σοφίτα',
+    'Βίλα',
+    'Ρετιρέ',
+  ];
 
   const handlePropertyTypeChange = (type) => {
     setSelectedPropertyTypes((prev) => {
@@ -39,7 +44,18 @@ const PropertiesFilter = ({
 
   const handleSearch = () => {
     if (!location) {
-      alert('Please enter a location');
+      alert('Παρακαλώ εισαγάγετε τοποθεσία');
+      return;
+    }
+
+    // Validate that prices and bedrooms are not negative
+    if ((minPrice && minPrice < 0) || (maxPrice && maxPrice < 0)) {
+      alert('Η τιμή δεν μπορεί να είναι αρνητική');
+      return;
+    }
+
+    if ((minBedrooms && minBedrooms < 0) || (maxBedrooms && maxBedrooms < 0)) {
+      alert('Ο αριθμός των υπνοδωματίων δεν μπορεί να είναι αρνητικός');
       return;
     }
 
@@ -54,7 +70,6 @@ const PropertiesFilter = ({
     if (minBedrooms) params.set('minBedrooms', minBedrooms);
     if (maxBedrooms) params.set('maxBedrooms', maxBedrooms);
     if (addedToSite && addedToSite !== 'Anytime') params.set('addedToSite', addedToSite);
-    if (includeLetAgreed) params.set('includeLetAgreed', 'true');
 
     router.push(`/listing-view?${params.toString()}`);
     onClose();
@@ -65,39 +80,47 @@ const PropertiesFilter = ({
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/50">
       <div className="flex items-center justify-center min-h-screen p-4">
-        <div className="bg-white rounded-lg shadow-lg w-full max-w-3xl">
-          <div className="flex justify-between items-center p-4 border-b">
-            <h2 className="text-xl font-semibold">
-              Properties to {propertyType} in {location}
+        <div className="bg-white rounded-2xl shadow-xl w-full max-w-3xl md:rounded-xl md:m-8">
+          <div className="relative p-4 border-b">
+            <h2 className="text-2xl font-bold text-center">
+              Ακίνητα προς{' '}
+              <span className="bg-gradient-to-br from-green-400 to-teal-500 shadow-neumorphic text-transparent bg-clip-text font-bold">
+                {propertyType}
+              </span>{' '}
+              σε{' '}
+              <span className="bg-gradient-to-r from-green-400 to-blue-500 text-transparent bg-clip-text font-extrabold">
+                {location}
+              </span>
             </h2>
-            <button className="btn btn-ghost" onClick={onClose}>
+            <button className="btn btn-ghost absolute top-2 right-2" onClick={onClose}>
               ✕
             </button>
           </div>
           <div className="p-4 space-y-6">
-            {/* Search Radius */}
+            {/* Ακτίνα αναζήτησης */}
             <div>
-              <label className="block text-sm font-medium mb-1">Search Radius (km)</label>
+              <label className="block text-lg font-semibold mb-1 text-center">Ακτίνα αναζήτησης (km)</label>
               <select
                 className="select select-bordered w-full"
                 value={radius}
                 onChange={(e) => setRadius(e.target.value)}
               >
-                <option value="0">This area only</option>
-                <option value="1">Within 1 km</option>
-                <option value="5">Within 5 km</option>
-                <option value="10">Within 10 km</option>
-                <option value="20">Within 20 km</option>
+                <option value="0">Μόνο αυτή η περιοχή</option>
+                <option value="1">Εντός 1 km</option>
+                <option value="5">Εντός 5 km</option>
+                <option value="10">Εντός 10 km</option>
+                <option value="20">Εντός 20 km</option>
               </select>
             </div>
 
-            {/* Price Range */}
+            {/* Εύρος τιμής */}
             <div>
-              <label className="block text-sm font-medium mb-1">Price Range (€)</label>
-              <div className="flex gap-2">
+              <label className="block text-lg font-semibold mb-1 text-center">Εύρος τιμής (€)</label>
+              <div className="flex gap-2 justify-center">
                 <input
                   type="number"
-                  placeholder="No min"
+                  min="0"
+                  placeholder="Χωρίς ελάχιστο"
                   className="input input-bordered w-full"
                   value={minPrice}
                   onChange={(e) => setMinPrice(e.target.value)}
@@ -105,7 +128,8 @@ const PropertiesFilter = ({
                 <span className="flex items-center">-</span>
                 <input
                   type="number"
-                  placeholder="No max"
+                  min="0"
+                  placeholder="Χωρίς μέγιστο"
                   className="input input-bordered w-full"
                   value={maxPrice}
                   onChange={(e) => setMaxPrice(e.target.value)}
@@ -113,10 +137,10 @@ const PropertiesFilter = ({
               </div>
             </div>
 
-            {/* Property Types */}
+            {/* Τύποι ακινήτων */}
             <div>
-              <label className="block text-sm font-medium mb-1">Property Types</label>
-              <div className="flex flex-wrap gap-2">
+              <label className="block text-lg font-semibold mb-1 text-center">Τύποι ακινήτων</label>
+              <div className="flex flex-wrap gap-2 justify-center">
                 {propertyTypeOptions.map((type) => (
                   <label key={type} className="cursor-pointer flex items-center gap-2">
                     <input
@@ -131,13 +155,14 @@ const PropertiesFilter = ({
               </div>
             </div>
 
-            {/* Number of Bedrooms */}
+            {/* Αριθμός υπνοδωματίων */}
             <div>
-              <label className="block text-sm font-medium mb-1">Number of Bedrooms</label>
-              <div className="flex gap-2">
+              <label className="block text-lg font-semibold mb-1 text-center">Αριθμός υπνοδωματίων</label>
+              <div className="flex gap-2 justify-center">
                 <input
                   type="number"
-                  placeholder="No min"
+                  min="0"
+                  placeholder="Χωρίς ελάχιστο"
                   className="input input-bordered w-full"
                   value={minBedrooms}
                   onChange={(e) => setMinBedrooms(e.target.value)}
@@ -145,7 +170,8 @@ const PropertiesFilter = ({
                 <span className="flex items-center">-</span>
                 <input
                   type="number"
-                  placeholder="No max"
+                  min="0"
+                  placeholder="Χωρίς μέγιστο"
                   className="input input-bordered w-full"
                   value={maxBedrooms}
                   onChange={(e) => setMaxBedrooms(e.target.value)}
@@ -153,44 +179,29 @@ const PropertiesFilter = ({
               </div>
             </div>
 
-            {/* Added to Site */}
+            {/* Προστέθηκαν στον ιστότοπο */}
             <div>
-              <label className="block text-sm font-medium mb-1">Added to Site</label>
+              <label className="block text-lg font-semibold mb-1 text-center">Προστέθηκαν στον ιστότοπο</label>
               <select
                 className="select select-bordered w-full"
                 value={addedToSite}
                 onChange={(e) => setAddedToSite(e.target.value)}
               >
-                <option value="Anytime">Anytime</option>
-                <option value="Last24Hours">Last 24 hours</option>
-                <option value="Last3Days">Last 3 days</option>
-                <option value="Last7Days">Last 7 days</option>
-                <option value="Last14Days">Last 14 days</option>
+                <option value="Anytime">Οποτεδήποτε</option>
+                <option value="Last24Hours">Τελευταίες 24 ώρες</option>
+                <option value="Last3Days">Τελευταίες 3 ημέρες</option>
+                <option value="Last7Days">Τελευταίες 7 ημέρες</option>
+                <option value="Last14Days">Τελευταίες 14 ημέρες</option>
               </select>
             </div>
-
-            {/* Include Let Agreed Properties */}
-            {propertyType === 'Rent' && (
-              <div>
-                <label className="cursor-pointer flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    className="checkbox checkbox-primary"
-                    checked={includeLetAgreed}
-                    onChange={(e) => setIncludeLetAgreed(e.target.checked)}
-                  />
-                  <span>Include Let Agreed properties</span>
-                </label>
-              </div>
-            )}
           </div>
 
           <div className="flex justify-end items-center p-4 border-t">
             <button className="btn btn-secondary mr-2" onClick={onClose}>
-              Cancel
+              Ακύρωση
             </button>
             <button className="btn btn-primary" onClick={handleSearch}>
-              Search Properties
+              Αναζήτηση ακινήτων
             </button>
           </div>
         </div>

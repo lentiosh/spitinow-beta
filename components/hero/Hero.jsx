@@ -1,5 +1,3 @@
-// Hero.jsx
-
 'use client';
 
 import { useState } from 'react';
@@ -48,7 +46,7 @@ const Hero = () => {
           </div>
 
           <div className="w-full max-w-2xl bg-white/80 backdrop-blur-sm rounded-2xl shadow-lg p-6 md:p-8">
-            <div className="flex flex-wrap justify-center gap-6 mb-6">
+            <div className="flex flex-wrap justify-center gap-6 mb-6 font-bold text-lg">
               <label className="label cursor-pointer gap-2">
                 <input
                   type="radio"
@@ -84,20 +82,14 @@ const Hero = () => {
                   inputValue={inputValue}
                   setInputValue={setInputValue}
                   placeholder="Εισάγετε περιοχή..."
-                  className="input input-bordered w-full pl-10 focus:input-primary bg-white/90"
+                  className="input input-bordered w-full pl-10 focus:input-primary bg-white/90 font-medium text-base"
                 />
               </div>
               <button
                 onClick={handleSearchClick}
-                className="btn btn-primary font-medium"
+                className="btn btn-primary font-bold w-full sm:w-auto"
               >
                 Αναζήτηση
-              </button>
-            </div>
-
-            <div className="mt-4 text-center">
-              <button className="btn btn-ghost btn-sm text-primary hover:text-primary-focus">
-                Προβολή πρόσφατων αναζητήσεων
               </button>
             </div>
           </div>

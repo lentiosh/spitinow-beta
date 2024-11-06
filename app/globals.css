@@ -19,3 +19,30 @@
   animation: gradient 8s linear infinite;
 }
 
+body {
+  font-family: 'Trip Sans', sans-serif;
+  font-size: 1rem;
+  line-height: 1.5;
+}
+
+@font-face {
+  font-family: 'Trip Sans Ultra';
+  src: url('/app/fonts/TripSans-Ultra.woff');
+  src: local('Trip Sans Ultra'), local('TripSans-Ultra'),
+      url('/app/fonts/TripSans-Ultra.woff') format('woff'),
+      url('/app/fonts/TripSans-Medium.woff') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Trip Sans';
+  src: url('/app/fonts/TripSans-Regular.woff');
+  src: local('Trip Sans Bold'), local('TripSans-Bold'),
+      url('/app/fonts/TripSans-Bold.woff') format('woff'),
+      url('/app/fonts/TripSans-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}

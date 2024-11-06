@@ -3,7 +3,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { UserButton, useUser } from '@clerk/nextjs';
-import { Bell, Menu, X, User } from 'lucide-react';
+import { HousePlus, Menu, X, User } from 'lucide-react';
 
 const HomeIcon = () => (
   <div className="relative">
@@ -43,7 +43,6 @@ const Navbar = () => {
   const navLinks = [
     { name: 'Κοινότητα', path: '/community' },
     { name: 'Μεσίτες', path: '/companies' },
-    { name: 'Καταχώρηση', path: '/add-new-listing' },
   ];
 
   return (
@@ -106,9 +105,9 @@ const Navbar = () => {
       <div className="navbar-end">
         {isSignedIn ? (
           <div className="flex items-center space-x-2">
-            <button className="btn btn-ghost btn-circle">
-              <Bell className="w-5 h-5" />
-            </button>
+            <Link href='/add-new-listing' className="btn btn-ghost btn-circle">
+              <HousePlus className="w-6 h-6" />
+            </Link>
             <div className="ml-2">
               <UserButton />
             </div>
