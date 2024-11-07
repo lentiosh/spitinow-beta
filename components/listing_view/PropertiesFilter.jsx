@@ -99,16 +99,16 @@ const PropertiesFilter = ({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm overflow-y-auto">
-      <div className="flex items-start justify-center min-h-screen">
+    <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
+      <div className="flex items-center justify-center h-screen">
         <div
-          className="bg-white w-full h-screen md:h-auto md:max-w-3xl md:rounded-xl md:mt-8 overflow-hidden transform transition-all duration-300 ease-in-out flex flex-col"
+          className="bg-white w-full max-h-screen md:h-auto md:max-w-3xl md:rounded-xl md:mt-8 overflow-hidden transform transition-all duration-300 ease-in-out flex flex-col"
           style={{
             opacity: isOpen ? 1 : 0,
             transform: isOpen ? 'translateY(0)' : 'translateY(100%)',
           }}
         >
-          <div className="relative p-4 border-b">
+          <div className="relative p-2 border-b">
             <h2 className="text-2xl font-bold text-center">
               Ακίνητα προς{' '}
               <span className="bg-gradient-to-br from-green-400 to-teal-500 text-transparent bg-clip-text">
@@ -126,7 +126,7 @@ const PropertiesFilter = ({
               ✕
             </button>
           </div>
-          <div className="flex-grow p-4 space-y-4 overflow-y-auto">
+          <div className="flex-grow p-2 space-y-2 overflow-y-auto">
             {/* Ακτίνα αναζήτησης */}
             <div>
               <label className="block text-lg font-semibold mb-1 text-center">
@@ -239,7 +239,7 @@ const PropertiesFilter = ({
             </div>
           </div>
 
-          <div className="flex-shrink-0 flex justify-end items-center p-4 border-t">
+          <div className="flex-shrink-0 flex justify-end items-center p-2 border-t">
             <button className="btn btn-secondary mr-2" onClick={onClose}>
               Ακύρωση
             </button>

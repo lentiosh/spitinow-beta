@@ -44,7 +44,7 @@ const GoogleAddressSearch = ({
       const request = {
         input: value,
         sessionToken: sessionToken,
-        componentRestrictions: { country: 'gr' }, // Restrict to Greece
+        componentRestrictions: { country: 'gr' },
         types: ['geocode', 'establishment'],
       };
 

@@ -1,11 +1,8 @@
-// GoogleMapSection.jsx
-
 'use client';
 
 import React, { useEffect, useState, useCallback } from 'react';
 import { GoogleMap, InfoWindow, useLoadScript } from '@react-google-maps/api';
 import MarkerItem from './MarkerItem';
-import Image from 'next/image';
 
 const containerStyle = {
   width: '100%',
@@ -29,17 +26,10 @@ function GoogleMapSection({ coordinates, listings, onPolygonComplete }) {
   const onLoad = useCallback(
     (mapInstance) => {
       setMap(mapInstance);
-      if (coordinates) {
-        mapInstance.panTo(coordinates);
-        if (mapInstance.getZoom() < 13) {
-          mapInstance.setZoom(13);
-        }
-      }
 
-      // Initialize DrawingManager
       const drawingManagerInstance = new window.google.maps.drawing.DrawingManager({
         drawingMode: null,
-        drawingControl: false, // We will add our own control
+        drawingControl: false,
       });
 
       drawingManagerInstance.setMap(mapInstance);
@@ -49,7 +39,6 @@ function GoogleMapSection({ coordinates, listings, onPolygonComplete }) {
         'overlaycomplete',
         function (event) {
           if (event.type === window.google.maps.drawing.OverlayType.POLYGON) {
-            // Remove previous polygon
             if (polygon) {
               polygon.setMap(null);
             }
@@ -57,19 +46,16 @@ function GoogleMapSection({ coordinates, listings, onPolygonComplete }) {
             const newPolygon = event.overlay;
             setPolygon(newPolygon);
 
-            // Get polygon coordinates
             const path = newPolygon.getPath().getArray();
             const coordinates = path.map((latLng) => ({
               lat: latLng.lat(),
               lng: latLng.lng(),
             }));
 
-            // Pass coordinates up to parent component
             if (onPolygonComplete) {
               onPolygonComplete(coordinates);
             }
 
-            // Disable drawing mode
             drawingManagerInstance.setDrawingMode(null);
             setIsDrawingMode(false);
           }
@@ -78,7 +64,7 @@ function GoogleMapSection({ coordinates, listings, onPolygonComplete }) {
 
       setDrawingManager(drawingManagerInstance);
     },
-    [coordinates, onPolygonComplete, polygon]
+    [onPolygonComplete, polygon]
   );
 
   const onUnmount = useCallback(() => {
@@ -88,58 +74,99 @@ function GoogleMapSection({ coordinates, listings, onPolygonComplete }) {
   const handleDrawButtonClick = () => {
     if (drawingManager) {
       if (isDrawingMode) {
-        // Disable drawing mode
         drawingManager.setDrawingMode(null);
         setIsDrawingMode(false);
       } else {
-        // Remove existing polygon
         if (polygon) {
           polygon.setMap(null);
           setPolygon(null);
         }
-        // Enable drawing mode
         drawingManager.setDrawingMode(window.google.maps.drawing.OverlayType.POLYGON);
         setIsDrawingMode(true);
       }
     }
   };
 
+  const handleRemoveArea = () => {
+    if (polygon) {
+      polygon.setMap(null);
+      setPolygon(null);
+      if (onPolygonComplete) {
+        onPolygonComplete([]);
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (map && listings && listings.length > 0) {
+      const bounds = new window.google.maps.LatLngBounds();
+      listings.forEach((listing) => {
+        if (listing.coordinates) {
+          bounds.extend(
+            new window.google.maps.LatLng(
+              listing.coordinates.lat,
+              listing.coordinates.lng
+            )
+          );
+        }
+      });
+      map.fitBounds(bounds);
+    }
+  }, [map, listings]);
+
   if (loadError) {
-    return <div>Error loading maps</div>;
+    return <div>Σφάλμα φόρτωσης χαρτών</div>;
   }
 
   if (!isLoaded) {
-    return <div>Loading Maps...</div>;
+    return <div>Φόρτωση χαρτών...</div>;
   }
 
-  return coordinates ? (
+  return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
-      {/* Add the custom search area button */}
-      <button
-        onClick={handleDrawButtonClick}
-        style={{
-          position: 'absolute',
-          top: '10px',
-          left: '10px',
-          zIndex: 10,
-          backgroundColor: '#fff',
-          padding: '8px 12px',
-          borderRadius: '4px',
-          border: '1px solid #ccc',
-          cursor: 'pointer',
-        }}
-      >
-        {isDrawingMode ? 'Cancel Drawing' : 'Create your custom search area'}
-      </button>
+      <div style={{ position: 'absolute', top: '10px', left: '10px', zIndex: 10 }}>
+        <button
+          onClick={handleDrawButtonClick}
+          style={{
+            backgroundColor: '#1f233a',
+            color: '#f8f6f4',
+            padding: '8px 14px',
+            borderRadius: '8px',
+            border: 'none',
+            fontSize: '13px',
+            cursor: 'pointer',
+            marginRight: '8px',
+          }}
+        >
+          {isDrawingMode
+            ? 'Ακύρωση σχεδίασης'
+            : 'Δημιουργήστε την περιοχή σας'}
+        </button>
+        {polygon && !isDrawingMode && (
+          <button
+            onClick={handleRemoveArea}
+            style={{
+              backgroundColor: '#ff5d5d',
+              color: '#f8f6f4',
+              padding: '5px 10px',
+              borderRadius: '12px',
+              border: 'none',
+              fontSize: '15px',
+              cursor: 'pointer',
+            }}
+          >
+            Αφαίρεση περιοχής
+          </button>
+        )}
+      </div>
       <GoogleMap
         mapContainerStyle={containerStyle}
-        center={coordinates}
-        zoom={13}
         onLoad={onLoad}
         onUnmount={onUnmount}
         options={{
           streetViewControl: false,
           mapTypeControl: false,
+          gestureHandling: 'greedy',
         }}
       >
         {listings &&
@@ -160,15 +187,11 @@ function GoogleMapSection({ coordinates, listings, onPolygonComplete }) {
             onCloseClick={() => setSelectedListing(null)}
           >
             <div style={{ maxWidth: '220px', padding: '0', margin: '0' }}>
-              {/* InfoWindow content */}
+              {/* Περιεχόμενο InfoWindow */}
             </div>
           </InfoWindow>
         )}
       </GoogleMap>
-    </div>
-  ) : (
-    <div className="flex items-center justify-center h-full">
-      <p>Enter a location to view the map.</p>
     </div>
   );
 }
