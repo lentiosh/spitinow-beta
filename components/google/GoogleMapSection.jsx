@@ -9,7 +9,7 @@ const containerStyle = {
   height: '100%',
 };
 
-const libraries = ['places', 'drawing'];
+const libraries = ['places', 'drawing', 'geometry']; 
 
 function GoogleMapSection({ coordinates, listings, onPolygonComplete }) {
   const [map, setMap] = useState(null);
@@ -91,10 +91,42 @@ function GoogleMapSection({ coordinates, listings, onPolygonComplete }) {
     if (polygon) {
       polygon.setMap(null);
       setPolygon(null);
+
+      const center = map.getCenter();
+
+      const radiusInMeters = 10000;
+      const circlePath = createCircularPolygon(center, radiusInMeters, 64);
+
+      const newPolygon = new window.google.maps.Polygon({
+        paths: circlePath,
+        map: map,
+      });
+
+      setPolygon(newPolygon);
+
+      const coordinates = circlePath.map((latLng) => ({
+        lat: latLng.lat(),
+        lng: latLng.lng(),
+      }));
+
       if (onPolygonComplete) {
-        onPolygonComplete([]);
+        onPolygonComplete(coordinates);
       }
     }
+  };
+
+  const createCircularPolygon = (center, radius, numPoints) => {
+    const circlePoints = [];
+    for (let i = 0; i <= numPoints; i++) {
+      const angle = (i / numPoints) * 360;
+      const point = window.google.maps.geometry.spherical.computeOffset(
+        center,
+        radius,
+        angle
+      );
+      circlePoints.push(point);
+    }
+    return circlePoints;
   };
 
   useEffect(() => {
@@ -138,9 +170,7 @@ function GoogleMapSection({ coordinates, listings, onPolygonComplete }) {
             marginRight: '8px',
           }}
         >
-          {isDrawingMode
-            ? 'Ακύρωση σχεδίασης'
-            : 'Δημιουργήστε την περιοχή σας'}
+          {isDrawingMode ? 'Ακύρωση σχεδίασης' : 'Δημιουργήστε την περιοχή σας'}
         </button>
         {polygon && !isDrawingMode && (
           <button
@@ -186,9 +216,6 @@ function GoogleMapSection({ coordinates, listings, onPolygonComplete }) {
             }}
             onCloseClick={() => setSelectedListing(null)}
           >
-            <div style={{ maxWidth: '220px', padding: '0', margin: '0' }}>
-              {/* Περιεχόμενο InfoWindow */}
-            </div>
           </InfoWindow>
         )}
       </GoogleMap>

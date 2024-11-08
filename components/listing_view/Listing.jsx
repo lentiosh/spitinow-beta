@@ -105,7 +105,7 @@ const Listing = ({
                 <div className="flex flex-col sm:flex-row gap-4 p-4">
                   <div className="relative w-full sm:w-48 h-48 sm:h-32 flex-shrink-0">
                     <Image
-                      src={item.listingImages[0]?.url || '/placeholder.jpg'}
+                      src={item.listingImages[0]?.url}
                       alt={`Εικόνα του ${item.address}`}
                       fill
                       className="object-cover rounded-lg"
