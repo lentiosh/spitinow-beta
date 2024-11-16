@@ -1,44 +1,14 @@
-'use client'
+'use client';
+
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { UserButton, useUser } from '@clerk/nextjs';
-import { HousePlus, Menu, X, User } from 'lucide-react';
-
-const HomeIcon = () => (
-  <div className="relative">
-    <svg
-      viewBox="0 0 24 24"
-      className="w-8 h-8"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      <path
-        d="M3 9.5L12 3L21 9.5V20C21 20.55 20.55 21 20 21H4C3.45 21 3 20.55 3 20V9.5Z"
-        stroke="#00ccbc"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path
-        d="M9 21V12H15V21"
-        stroke="#00ccbc"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-    <span className="absolute top-0 right-[-10px] text-xs font-bold text-white bg-red-500 rounded-full px-1">
-      BETA
-    </span>
-  </div>
-);
+import { usePathname } from 'next/navigation';
+import { Menu, X } from 'lucide-react';
+import UserMenu from './UserMenu';
 
 const Navbar = () => {
-  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const pathname = usePathname();
-  const { user, isSignedIn } = useUser();
 
   const navLinks = [
     { name: 'Κοινότητα', path: '/community' },
@@ -46,93 +16,103 @@ const Navbar = () => {
   ];
 
   return (
-    <div className="navbar mx-auto px-6 lg:px12 left-0 right-0 bg-base-100 sticky top-0 z-40 shadow-sm">
-      <div className="navbar-start">
-        <div className="dropdown">
-          <label 
-            tabIndex={0} 
-            className="btn btn-ghost lg:hidden"
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            {menuOpen ? (
-              <X className="w-5 h-5" />
-            ) : (
-              <Menu className="w-5 h-5" />
-            )}
-          </label>
-          {menuOpen && (
-            <ul tabIndex={0} className="menu menu-sm dropdown-content mt-3 z-[1] p-2 shadow bg-base-100 rounded-box w-52">
+    <>
+      <nav className="fixed top-0 left-0 right-0 bg-white shadow z-50">
+        <div className="container mx-auto px-4 py-2 flex items-center justify-between h-14">
+          {/* Left Side: Mobile Menu Button */}
+          <div className="flex items-center lg:hidden">
+            <button
+              className="btn btn-ghost btn-circle"
+              onClick={() => setMenuOpen(!menuOpen)}
+              aria-label="Toggle menu"
+            >
+              {menuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
+          </div>
+
+          {/* Center: Logo */}
+          <div className="flex-1 flex items-center justify-center lg:justify-start">
+            <Link href="/">
+              <div className="flex items-center space-x-2 cursor-pointer">
+                {/* Logo with rounded background */}
+                <div className="w-8 h-8 bg-[#FF385C] rounded-full flex items-center justify-center">
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="w-5 h-5 text-white"
+                    fill="none"
+                    xmlns="http://www.w3.org/2000/svg"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M3 9.5L12 3L21 9.5V20C21 20.55 20.55 21 20 21H4C3.45 21 3 20.55 3 20V9.5Z"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                    <path
+                      d="M9 21V12H15V21"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
+                  </svg>
+                </div>
+                {/* Logo Text */}
+                <span className="text-2xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-pink-500 via-red-500 to-orange-500">
+                  spitinow.com
+                </span>
+              </div>
+            </Link>
+          </div>
+
+          {/* Right Side: User Menu and Nav Links */}
+          <div className="flex items-center space-x-4">
+            <div className="hidden lg:flex space-x-4">
               {navLinks.map((link) => (
-                <li key={link.path}>
-                  <Link
-                    href={link.path}
-                    onClick={() => setMenuOpen(false)}
-                    className={pathname === link.path ? 'text-[#1ad1a5]' : ''}
+                <Link key={link.path} href={link.path}>
+                  <span
+                    className={`px-4 py-2 rounded-full text-sm font-semibold cursor-pointer ${
+                      pathname === link.path
+                        ? 'text-[#FF385C] bg-[#FF385C]/10'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
                   >
                     {link.name}
-                  </Link>
-                </li>
+                  </span>
+                </Link>
               ))}
-            </ul>
-          )}
-        </div>
-        <Link href="/" className="btn btn-ghost">
-          <div className="flex items-center space-x-2">
-            <HomeIcon />
-            <span className="text-xl font-bold bg-gradient-to-r from-[#00ccbc] to-[#1ad1a5] bg-clip-text text-transparent">
-              spitinow.com
-            </span>
+            </div>
+            {/* UserMenu */}
+            <UserMenu />
           </div>
-        </Link>
-      </div>
+        </div>
 
-      <div className="navbar-center hidden lg:flex">
-        <ul className="menu menu-horizontal px-1">
-          {navLinks.map((link) => (
-            <li key={link.path}>
-              <Link
-                href={link.path}
-                className={`px-4 py-2 text-base font-semibold rounded-lg 
-                  ${pathname === link.path ? 'text-[#1ad1a5] bg-[#1ad1a5]/10' : 'hover:bg-gray-200'}`}
-              >
-                {link.name}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-
-      <div className="navbar-end">
-        {isSignedIn ? (
-          <div className="flex items-center space-x-2">
-            <Link href='/add-new-listing' className="btn btn-ghost btn-circle">
-              <HousePlus className="w-6 h-6" />
-            </Link>
-            <div className="ml-2">
-              <UserButton />
+        {/* Mobile Menu */}
+        {menuOpen && (
+          <div className="lg:hidden bg-white shadow-md">
+            <div className="px-4 pt-4 pb-4 space-y-1">
+              {navLinks.map((link) => (
+                <Link key={link.path} href={link.path}>
+                  <span
+                    onClick={() => setMenuOpen(false)}
+                    className={`block px-4 py-2 rounded-full text-base font-medium cursor-pointer ${
+                      pathname === link.path
+                        ? 'text-[#FF385C] bg-[#FF385C]/10'
+                        : 'text-gray-700 hover:bg-gray-100'
+                    }`}
+                  >
+                    {link.name}
+                  </span>
+                </Link>
+              ))}
             </div>
           </div>
-        ) : (
-          <div className="flex items-center space-x-2">
-            <Link href="/sign-in" className="hidden md:block">
-              <button className="btn btn-ghost text-[#1ad1a5]">
-                Σύνδεση
-              </button>
-            </Link>
-            <Link href="/sign-up" className="hidden md:block">
-              <button className="btn bg-[#1ad1a5] text-white hover:bg-[#1ad1a5] border-none">
-                Εγγραφή
-              </button>
-            </Link>
-            <Link href="/sign-in" className="md:hidden">
-              <button className="btn btn-ghost btn-circle">
-                <User className="w-5 h-5" />
-              </button>
-            </Link>
-          </div>
         )}
-      </div>
-    </div>
+      </nav>
+      <div className="h-14" />
+    </>
   );
 };
 
