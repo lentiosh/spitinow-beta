@@ -12,7 +12,7 @@ const Navbar = () => {
 
   const navLinks = [
     { name: 'Κοινότητα', path: '/community' },
-    { name: 'Μεσίτες', path: '/companies' },
+    { name: 'Μεσίτες', path: '/agencies' },
   ];
 
   return (

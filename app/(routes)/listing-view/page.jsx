@@ -1,18 +1,28 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import React, {
+  useEffect,
+  useState,
+  useCallback,
+  Suspense,
+  lazy,
+} from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
-import Listing from '@/components/listing_view/Listing';
 import dynamic from 'next/dynamic';
 import { Loader } from '@googlemaps/js-api-loader';
 import * as turf from '@turf/turf';
 
-const GoogleMapSection = dynamic(() => import('@/components/google/GoogleMapSection'), {
-  ssr: false,
-});
+const GoogleMapSection = dynamic(
+  () => import('@/components/google/GoogleMapSection'),
+  {
+    ssr: false,
+  }
+);
 
-const ListingMapView = () => {
+const Listing = lazy(() => import('@/components/listing_view/Listing'));
+
+const ListingMapView = React.memo(() => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -37,7 +47,7 @@ const ListingMapView = () => {
   // State to keep track of the drawn polygon coordinates
   const [polygonCoords, setPolygonCoords] = useState(null);
 
-  const fetchCoordinates = async (address) => {
+  const fetchCoordinates = useCallback(async (address) => {
     const loader = new Loader({
       apiKey: process.env.NEXT_PUBLIC_GOOGLE_PLACE_API_KEY,
       libraries: ['places'],
@@ -67,28 +77,31 @@ const ListingMapView = () => {
       console.error('Error fetching coordinates:', error);
       return null;
     }
-  };
+  }, []);
 
   // Function to calculate distance between two points in meters
-  const getDistanceFromLatLonInMeters = (lat1, lon1, lat2, lon2) => {
-    const R = 6371e3; // Radius of Earth in meters
-    const φ1 = (lat1 * Math.PI) / 180; // φ, λ in radians
-    const φ2 = (lat2 * Math.PI) / 180;
-    const Δφ = ((lat2 - lat1) * Math.PI) / 180;
-    const Δλ = ((lon2 - lon1) * Math.PI) / 180;
+  const getDistanceFromLatLonInMeters = useCallback(
+    (lat1, lon1, lat2, lon2) => {
+      const R = 6371e3; // Radius of Earth in meters
+      const φ1 = (lat1 * Math.PI) / 180; // φ, λ in radians
+      const φ2 = (lat2 * Math.PI) / 180;
+      const Δφ = ((lat2 - lat1) * Math.PI) / 180;
+      const Δλ = ((lon2 - lon1) * Math.PI) / 180;
 
-    const a =
-      Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
-      Math.cos(φ1) *
-        Math.cos(φ2) *
-        Math.sin(Δλ / 2) *
-        Math.sin(Δλ / 2);
+      const a =
+        Math.sin(Δφ / 2) * Math.sin(Δφ / 2) +
+        Math.cos(φ1) *
+          Math.cos(φ2) *
+          Math.sin(Δλ / 2) *
+          Math.sin(Δλ / 2);
 
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
-    const d = R * c; // in meters
-    return d;
-  };
+      const d = R * c; // in meters
+      return d;
+    },
+    []
+  );
 
   const fetchListings = useCallback(
     async (searchTerm = '', location = null, polygonCoords = null) => {
@@ -103,8 +116,10 @@ const ListingMapView = () => {
         // Apply filters
         if (minPrice) query = query.gte('price', parseFloat(minPrice));
         if (maxPrice) query = query.lte('price', parseFloat(maxPrice));
-        if (minBedrooms) query = query.gte('bedrooms', parseInt(minBedrooms));
-        if (maxBedrooms) query = query.lte('bedrooms', parseInt(maxBedrooms));
+        if (minBedrooms)
+          query = query.gte('bedrooms', parseInt(minBedrooms));
+        if (maxBedrooms)
+          query = query.lte('bedrooms', parseInt(maxBedrooms));
 
         if (propertyTypes) {
           const typesArray = propertyTypes.split(',');
@@ -141,8 +156,10 @@ const ListingMapView = () => {
 
           // Close the polygon if it's not already closed
           if (
-            polygonCoords[0].lat !== polygonCoords[polygonCoords.length - 1].lat ||
-            polygonCoords[0].lng !== polygonCoords[polygonCoords.length - 1].lng
+            polygonCoords[0].lat !==
+              polygonCoords[polygonCoords.length - 1].lat ||
+            polygonCoords[0].lng !==
+              polygonCoords[polygonCoords.length - 1].lng
           ) {
             turfPolygon.coordinates[0].push([
               polygonCoords[0].lng,
@@ -159,7 +176,10 @@ const ListingMapView = () => {
             ) {
               const point = {
                 type: 'Point',
-                coordinates: [listing.coordinates.lng, listing.coordinates.lat],
+                coordinates: [
+                  listing.coordinates.lng,
+                  listing.coordinates.lat,
+                ],
               };
 
               return turf.booleanPointInPolygon(point, turfPolygon);
@@ -173,13 +193,22 @@ const ListingMapView = () => {
           const effectiveRadius = radiusInMeters || 1000; // Default to 1km if radius is 0
 
           listings = listings.filter((listing) => {
-            if (listing.coordinates && listing.coordinates.lat && listing.coordinates.lng) {
+            if (
+              listing.coordinates &&
+              listing.coordinates.lat &&
+              listing.coordinates.lng
+            ) {
               const lat1 = listing.coordinates.lat;
               const lng1 = listing.coordinates.lng;
               const lat2 = location.lat;
               const lng2 = location.lng;
 
-              const distance = getDistanceFromLatLonInMeters(lat1, lng1, lat2, lng2);
+              const distance = getDistanceFromLatLonInMeters(
+                lat1,
+                lng1,
+                lat2,
+                lng2
+              );
               return distance <= effectiveRadius;
             } else {
               return false;
@@ -203,6 +232,7 @@ const ListingMapView = () => {
       propertyTypes,
       addedToSite,
       radiusParam,
+      getDistanceFromLatLonInMeters,
     ]
   );
 
@@ -222,13 +252,15 @@ const ListingMapView = () => {
     } else {
       fetchListings();
     }
-  }, [searchTerm, fetchListings]);
+  }, [searchTerm, fetchListings, fetchCoordinates]);
 
   const handleSearchClick = async () => {
     const term = inputValue.trim();
     if (!term) return;
 
-    const newUrl = `/listing-view?search=${encodeURIComponent(term)}&type=${typeParam}`;
+    const newUrl = `/listing-view?search=${encodeURIComponent(
+      term
+    )}&type=${typeParam}`;
     router.push(newUrl);
     const locationData = await fetchCoordinates(term);
     if (locationData) {
@@ -247,7 +279,10 @@ const ListingMapView = () => {
   return (
     <div className="flex flex-col lg:flex-row min-h-screen max-h-screen overflow-hidden bg-base-100">
       <div className="lg:hidden sticky top-0 z-20 bg-base-100 border-b p-2">
-        <button className="btn btn-outline w-full" onClick={() => setShowMap(!showMap)}>
+        <button
+          className="btn btn-outline w-full"
+          onClick={() => setShowMap(!showMap)}
+        >
           {showMap ? 'Show Listings' : 'Show Map'}
         </button>
       </div>
@@ -257,15 +292,17 @@ const ListingMapView = () => {
           showMap ? 'hidden' : 'flex-1'
         } lg:block lg:w-[55%] bg-base-100 overflow-y-auto border-r`}
       >
-        <Listing
-          listing={listing}
-          loading={loading}
-          inputValue={inputValue}
-          setInputValue={setInputValue}
-          handleSearchClick={handleSearchClick}
-          setCoordinates={setCoordinates}
-          propertyType={propertyType}
-        />
+        <Suspense fallback={<div>Loading Listings...</div>}>
+          <Listing
+            listing={listing}
+            loading={loading}
+            inputValue={inputValue}
+            setInputValue={setInputValue}
+            handleSearchClick={handleSearchClick}
+            setCoordinates={setCoordinates}
+            propertyType={propertyType}
+          />
+        </Suspense>
       </div>
 
       <div
@@ -289,6 +326,6 @@ const ListingMapView = () => {
       </div>
     </div>
   );
-};
+});
 
 export default ListingMapView;

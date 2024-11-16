@@ -1,11 +1,13 @@
 import Hero from "@/components/hero/Hero";
-import SeeHow from "@/components/seehow/SeeHow";
+import Navbar from '@/components/navbar/Navbar';
+import Footer from '@/components/footer/Footer';
 
 const HomePage = () => {
   return (
     <div>
+      <Navbar />
       <Hero />
-      <SeeHow />
+      <Footer />
     </div>
   )
 }

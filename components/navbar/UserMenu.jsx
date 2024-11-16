@@ -9,16 +9,13 @@ const UserMenu = () => {
   const { isLoaded, isSignedIn } = useUser();
   const [mounted, setMounted] = useState(false);
 
-  // Ensure the component only renders after it's mounted to prevent hydration mismatches
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // Define the size of the container
   const containerStyles = 'flex items-center space-x-2 w-[100px]';
 
   if (!mounted || !isLoaded) {
-    // Render a placeholder during SSR and initial mount
     return (
       <div className={containerStyles}>
         <div className="w-10 h-10 rounded-full bg-gray-200 animate-pulse"></div>
