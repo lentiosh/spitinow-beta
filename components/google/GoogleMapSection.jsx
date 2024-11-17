@@ -9,7 +9,7 @@ const containerStyle = {
   height: '100%',
 };
 
-const libraries = ['places', 'drawing', 'geometry']; 
+const libraries = ['places', 'drawing', 'geometry'];
 
 function GoogleMapSection({ coordinates, listings, onPolygonComplete }) {
   const [map, setMap] = useState(null);
@@ -216,6 +216,7 @@ function GoogleMapSection({ coordinates, listings, onPolygonComplete }) {
             }}
             onCloseClick={() => setSelectedListing(null)}
           >
+            {/* You can add content here, e.g., listing details */}
           </InfoWindow>
         )}
       </GoogleMap>
@@ -223,4 +224,4 @@ function GoogleMapSection({ coordinates, listings, onPolygonComplete }) {
   );
 }
 
-export default React.memo(GoogleMapSection);
+export default GoogleMapSection;

@@ -7,7 +7,7 @@ import React, {
   Suspense,
   lazy,
 } from 'react';
-import { useSearchParams, useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import dynamic from 'next/dynamic';
 import { Loader } from '@googlemaps/js-api-loader';
@@ -22,11 +22,11 @@ const GoogleMapSection = dynamic(
 
 const Listing = lazy(() => import('@/components/listing_view/Listing'));
 
-const ListingMapView = React.memo(() => {
+const ListingMapView = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  // Parse URL parameters
+  // Parse URL parameters from query
   const typeParam = searchParams.get('type') || 'Rent';
   const searchTerm = searchParams.get('search') || '';
   const radiusParam = searchParams.get('radius') || '0';
@@ -252,23 +252,39 @@ const ListingMapView = React.memo(() => {
     } else {
       fetchListings();
     }
-  }, [searchTerm, fetchListings, fetchCoordinates]);
+  }, [
+    searchTerm,
+    typeParam,
+    minPrice,
+    maxPrice,
+    minBedrooms,
+    maxBedrooms,
+    propertyTypes,
+    addedToSite,
+    radiusParam,
+    fetchListings,
+    fetchCoordinates,
+  ]);
 
   const handleSearchClick = async () => {
     const term = inputValue.trim();
     if (!term) return;
 
-    const newUrl = `/listing-view?search=${encodeURIComponent(
-      term
-    )}&type=${typeParam}`;
+    const params = new URLSearchParams({
+      search: term,
+      type: typeParam,
+      radius: radiusParam,
+      ...(minPrice && { minPrice: minPrice }),
+      ...(maxPrice && { maxPrice: maxPrice }),
+      ...(propertyTypes && { propertyTypes: propertyTypes }),
+      ...(minBedrooms && { minBedrooms: minBedrooms }),
+      ...(maxBedrooms && { maxBedrooms: maxBedrooms }),
+      ...(addedToSite !== 'Anytime' && { addedToSite: addedToSite }),
+    });
+
+    const newUrl = `/listing-view?${params.toString()}`;
     router.push(newUrl);
-    const locationData = await fetchCoordinates(term);
-    if (locationData) {
-      setCoordinates(locationData.coordinates);
-      await fetchListings(term, locationData.coordinates);
-    } else {
-      await fetchListings(term);
-    }
+    // The component will re-render with new searchParams
   };
 
   const handlePolygonComplete = (coords) => {
@@ -326,6 +342,6 @@ const ListingMapView = React.memo(() => {
       </div>
     </div>
   );
-});
+};
 
 export default ListingMapView;
