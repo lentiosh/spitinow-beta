@@ -36,6 +36,7 @@ const ListingMapView = () => {
   const minBedrooms = searchParams.get('minBedrooms') || '';
   const maxBedrooms = searchParams.get('maxBedrooms') || '';
   const addedToSite = searchParams.get('addedToSite') || 'Anytime';
+  const polygonParam = searchParams.get('polygon') || '';
 
   const [listing, setListing] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -238,7 +239,19 @@ const ListingMapView = () => {
 
   useEffect(() => {
     setInputValue(searchTerm);
-    if (searchTerm) {
+
+    // Parse polygon coordinates from the URL
+    if (polygonParam) {
+      try {
+        const decoded = decodeURIComponent(polygonParam);
+        const parsedCoords = JSON.parse(decoded);
+        setPolygonCoords(parsedCoords);
+        fetchListings(searchTerm, null, parsedCoords);
+      } catch (error) {
+        console.error('Error parsing polygon coordinates:', error);
+        fetchListings(searchTerm);
+      }
+    } else if (searchTerm) {
       const init = async () => {
         const locationData = await fetchCoordinates(searchTerm);
         if (locationData) {
@@ -264,6 +277,7 @@ const ListingMapView = () => {
     radiusParam,
     fetchListings,
     fetchCoordinates,
+    polygonParam, // Ensure useEffect runs when polygonParam changes
   ]);
 
   const handleSearchClick = async () => {
@@ -280,6 +294,17 @@ const ListingMapView = () => {
       ...(minBedrooms && { minBedrooms: minBedrooms }),
       ...(maxBedrooms && { maxBedrooms: maxBedrooms }),
       ...(addedToSite !== 'Anytime' && { addedToSite: addedToSite }),
+      ...(polygonCoords &&
+        polygonCoords.length > 0 && {
+          polygon: encodeURIComponent(
+            JSON.stringify(
+              polygonCoords.map((coord) => ({
+                lat: coord.lat,
+                lng: coord.lng,
+              }))
+            )
+          ),
+        }),
     });
 
     const newUrl = `/listing-view?${params.toString()}`;
@@ -290,6 +315,33 @@ const ListingMapView = () => {
   const handlePolygonComplete = (coords) => {
     setPolygonCoords(coords);
     fetchListings(searchTerm, null, coords);
+
+    // Serialize polygon coordinates as a JSON string and encode
+    const polygonSerialized = encodeURIComponent(
+      JSON.stringify(
+        coords.map((coord) => ({
+          lat: coord.lat,
+          lng: coord.lng,
+        }))
+      )
+    );
+
+    // Update the URL with the polygon parameter
+    const params = new URLSearchParams({
+      search: searchTerm,
+      type: typeParam,
+      radius: radiusParam,
+      ...(minPrice && { minPrice: minPrice }),
+      ...(maxPrice && { maxPrice: maxPrice }),
+      ...(propertyTypes && { propertyTypes: propertyTypes }),
+      ...(minBedrooms && { minBedrooms: minBedrooms }),
+      ...(maxBedrooms && { maxBedrooms: maxBedrooms }),
+      ...(addedToSite !== 'Anytime' && { addedToSite: addedToSite }),
+      ...(polygonSerialized && { polygon: polygonSerialized }),
+    });
+
+    const newUrl = `/listing-view?${params.toString()}`;
+    router.push(newUrl);
   };
 
   return (
@@ -332,6 +384,7 @@ const ListingMapView = () => {
               coordinates={coordinates}
               listings={listing}
               onPolygonComplete={handlePolygonComplete}
+              initialPolygonCoords={polygonCoords} // Pass initial polygon coords to the map component
             />
           ) : (
             <div className="flex items-center justify-center h-full">
