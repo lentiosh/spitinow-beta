@@ -7,7 +7,7 @@ import React, {
   Suspense,
   lazy,
 } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import dynamic from 'next/dynamic';
 import { Loader } from '@googlemaps/js-api-loader';
@@ -25,6 +25,7 @@ const Listing = lazy(() => import('@/components/listing_view/Listing'));
 const ListingMapView = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const pathname = usePathname();
 
   // Parse URL parameters from query
   const typeParam = searchParams.get('type') || 'Rent';
@@ -104,8 +105,9 @@ const ListingMapView = () => {
     []
   );
 
+  // Refactor fetchListings to avoid stale closures
   const fetchListings = useCallback(
-    async (searchTerm = '', location = null, polygonCoords = null) => {
+    async (currentSearchTerm, currentLocation, currentPolygonCoords) => {
       setLoading(true);
       try {
         let query = supabase
@@ -146,25 +148,25 @@ const ListingMapView = () => {
         let listings = data || [];
 
         // Filter listings within the drawn polygon
-        if (polygonCoords && polygonCoords.length > 0) {
+        if (currentPolygonCoords && currentPolygonCoords.length > 0) {
           // Build a Turf.js polygon
           const turfPolygon = {
             type: 'Polygon',
             coordinates: [
-              polygonCoords.map((coord) => [coord.lng, coord.lat]), // Turf expects [lng, lat]
+              currentPolygonCoords.map((coord) => [coord.lng, coord.lat]), // Turf expects [lng, lat]
             ],
           };
 
           // Close the polygon if it's not already closed
           if (
-            polygonCoords[0].lat !==
-              polygonCoords[polygonCoords.length - 1].lat ||
-            polygonCoords[0].lng !==
-              polygonCoords[polygonCoords.length - 1].lng
+            currentPolygonCoords[0].lat !==
+              currentPolygonCoords[currentPolygonCoords.length - 1].lat ||
+            currentPolygonCoords[0].lng !==
+              currentPolygonCoords[currentPolygonCoords.length - 1].lng
           ) {
             turfPolygon.coordinates[0].push([
-              polygonCoords[0].lng,
-              polygonCoords[0].lat,
+              currentPolygonCoords[0].lng,
+              currentPolygonCoords[0].lat,
             ]);
           }
 
@@ -188,7 +190,7 @@ const ListingMapView = () => {
               return false;
             }
           });
-        } else if (location) {
+        } else if (currentLocation) {
           // Existing radius filtering code
           const radiusInMeters = parseFloat(radiusParam) * 1000;
           const effectiveRadius = radiusInMeters || 1000; // Default to 1km if radius is 0
@@ -201,8 +203,8 @@ const ListingMapView = () => {
             ) {
               const lat1 = listing.coordinates.lat;
               const lng1 = listing.coordinates.lng;
-              const lat2 = location.lat;
-              const lng2 = location.lng;
+              const lat2 = currentLocation.lat;
+              const lng2 = currentLocation.lng;
 
               const distance = getDistanceFromLatLonInMeters(
                 lat1,
@@ -238,33 +240,90 @@ const ListingMapView = () => {
   );
 
   useEffect(() => {
-    setInputValue(searchTerm);
+    const initialize = async () => {
+      setInputValue(searchTerm);
 
-    // Parse polygon coordinates from the URL
-    if (polygonParam) {
-      try {
-        const decoded = decodeURIComponent(polygonParam);
-        const parsedCoords = JSON.parse(decoded);
-        setPolygonCoords(parsedCoords);
-        fetchListings(searchTerm, null, parsedCoords);
-      } catch (error) {
-        console.error('Error parsing polygon coordinates:', error);
-        fetchListings(searchTerm);
-      }
-    } else if (searchTerm) {
-      const init = async () => {
+      // Parse polygon coordinates from the URL
+      if (polygonParam) {
+        try {
+          const decoded = decodeURIComponent(polygonParam);
+          const parsedCoords = JSON.parse(decoded);
+          setPolygonCoords(parsedCoords);
+          fetchListings(searchTerm, null, parsedCoords);
+        } catch (error) {
+          console.error('Error parsing polygon coordinates:', error);
+          fetchListings(searchTerm, null, null);
+        }
+      } else if (searchTerm) {
         const locationData = await fetchCoordinates(searchTerm);
         if (locationData) {
           setCoordinates(locationData.coordinates);
-          await fetchListings(searchTerm, locationData.coordinates);
+          fetchListings(searchTerm, locationData.coordinates, null);
         } else {
-          await fetchListings(searchTerm);
+          fetchListings(searchTerm, null, null);
+        }
+      } else {
+        fetchListings('', null, null);
+      }
+    };
+
+    initialize();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    pathname, // Trigger effect when pathname changes
+    searchTerm,
+    typeParam,
+    minPrice,
+    maxPrice,
+    minBedrooms,
+    maxBedrooms,
+    propertyTypes,
+    addedToSite,
+    radiusParam,
+    polygonParam, // Ensure useEffect runs when polygonParam changes
+  ]);
+
+  // Listen to popstate events to handle back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      console.log('Popstate event detected');
+      // Re-initialize the component when popstate is triggered
+      setLoading(true);
+      const initialize = async () => {
+        setInputValue(searchTerm);
+
+        // Parse polygon coordinates from the URL
+        if (polygonParam) {
+          try {
+            const decoded = decodeURIComponent(polygonParam);
+            const parsedCoords = JSON.parse(decoded);
+            setPolygonCoords(parsedCoords);
+            fetchListings(searchTerm, null, parsedCoords);
+          } catch (error) {
+            console.error('Error parsing polygon coordinates:', error);
+            fetchListings(searchTerm, null, null);
+          }
+        } else if (searchTerm) {
+          const locationData = await fetchCoordinates(searchTerm);
+          if (locationData) {
+            setCoordinates(locationData.coordinates);
+            fetchListings(searchTerm, locationData.coordinates, null);
+          } else {
+            fetchListings(searchTerm, null, null);
+          }
+        } else {
+          fetchListings('', null, null);
         }
       };
-      init();
-    } else {
-      fetchListings();
-    }
+
+      initialize();
+    };
+
+    window.addEventListener('popstate', handlePopState);
+
+    return () => {
+      window.removeEventListener('popstate', handlePopState);
+    };
   }, [
     searchTerm,
     typeParam,
@@ -275,9 +334,9 @@ const ListingMapView = () => {
     propertyTypes,
     addedToSite,
     radiusParam,
+    polygonParam,
     fetchListings,
     fetchCoordinates,
-    polygonParam, // Ensure useEffect runs when polygonParam changes
   ]);
 
   const handleSearchClick = async () => {
