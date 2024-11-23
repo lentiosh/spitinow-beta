@@ -1,17 +1,20 @@
 'use client';
 
-import React from 'react';
-import Provider from './Provider';
+import React, { Suspense, lazy } from 'react';
 import Navbar from '@/components/navbar/Navbar';
-
+import { usePageReloadOnBack } from '../../../utils/navigationUtils';
 const Layout = ({ children }) => {
+  usePageReloadOnBack(); 
+
   return (
-    <Provider>
       <div className="flex flex-col min-h-screen">
         <Navbar />
-        <main className="flex-1">{children}</main>
+        <main className="flex-1">
+          <Suspense fallback={<div>Loading...</div>}>
+            {children}
+          </Suspense>
+        </main>
       </div>
-    </Provider>
   );
 };
 
