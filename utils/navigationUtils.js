@@ -13,19 +13,17 @@ export const usePageReloadOnBack = () => {
           : false;
 
       if (isFromBFCache || isBackForward) {
-        window.location.reload(); // Perform a hard reload
+        window.location.reload(); 
       }
     };
 
     const handlePopState = () => {
-      window.location.reload(); // Perform a hard reload
+      window.location.reload(); 
     };
 
-    // Add event listeners
     window.addEventListener('pageshow', handlePageShow);
     window.addEventListener('popstate', handlePopState);
 
-    // Cleanup event listeners on component unmount
     return () => {
       window.removeEventListener('pageshow', handlePageShow);
       window.removeEventListener('popstate', handlePopState);
