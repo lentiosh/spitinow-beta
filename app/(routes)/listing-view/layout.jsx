@@ -1,12 +1,11 @@
-// components/Layout.js
 'use client';
 
-import React, { Suspense, lazy } from 'react';
+import React, { Suspense } from 'react';
 import Navbar from '@/components/navbar/Navbar';
-import { usePageReloadOnBack } from '@/utils/navigationUtils'; // Adjusted import path
+import { usePageReloadOnBack } from '@/utils/navigationUtils';
 
 const Layout = ({ children }) => {
-  usePageReloadOnBack(); // Initialize the hard reload on back navigation
+  usePageReloadOnBack();
 
   return (
     <div className="flex flex-col min-h-screen">

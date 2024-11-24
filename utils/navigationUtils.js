@@ -1,7 +1,21 @@
 import { useEffect } from 'react';
 
+export const isMobileBrowser = () => {
+  if (typeof window === 'undefined') return false;
+  
+  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+    window.navigator.userAgent
+  );
+};
+
 export const usePageReloadOnBack = () => {
   useEffect(() => {
+    // Safety check for browser environment
+    if (typeof window === 'undefined' || typeof document === 'undefined') {
+      return;
+    }
+
+    // Remove the mobile check to allow functionality on mobile
     let lastActionTime = Date.now();
 
     const handleVisibilityChange = () => {
@@ -36,10 +50,4 @@ export const usePageReloadOnBack = () => {
       window.removeEventListener('popstate', handlePopState);
     };
   }, []);
-};
-
-export const isMobileBrowser = () => {
-  return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-    navigator.userAgent
-  );
 };
