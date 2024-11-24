@@ -1,7 +1,7 @@
 // components/ListingMapView.js
 'use client';
 
-import React, { useEffect, useState, Suspense, lazy,} from 'react';
+import React, { useEffect, Suspense, lazy } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import dynamic from 'next/dynamic';
@@ -422,50 +422,53 @@ const ListingMapView = () => {
   };
 
   return (
-    <div className="flex flex-col lg:flex-row min-h-screen max-h-screen overflow-hidden bg-base-100">
-      {/* Toggle Button for Mobile View */}
-      <div className="lg:hidden sticky top-0 z-20 bg-base-100 border-b p-2">
+    <div className="flex flex-col min-h-screen overflow-hidden bg-base-100">
+      {/* Toggle Button for All Views */}
+      <div className="sticky top-0 z-20 bg-base-100 border-b p-2">
         <button
-          className="btn btn-outline w-full"
+          className="btn btn-outline w-full lg:w-auto"
           onClick={() => toggleShowMap()}
         >
           {showMap ? 'Show Listings' : 'Show Map'}
         </button>
       </div>
 
-      {/* Listings Section */}
-      <div
-        className={`${
-          showMap ? 'hidden' : 'flex-1'
-        } lg:block lg:w-[55%] bg-base-100 overflow-y-auto border-r`}
-      >
-        <Suspense fallback={<div>Loading Listings...</div>}>
-          <Listing
-            listing={listing}
-            loading={loading}
-            handleSearchClick={handleSearchClickInternal}
-          />
-        </Suspense>
-      </div>
-
-      {/* Map Section */}
-      <div
-        className={`${
-          showMap ? 'flex-1' : 'hidden'
-        } lg:block lg:w-[45%] bg-base-200 transition-all duration-300 ease-in-out sticky top-16 h-[calc(100vh-64px)]`}
-      >
-        <div className="w-full h-full">
-          {coordinates ? (
-            <GoogleMapSection
-              coordinates={coordinates}
-              listings={listing}
-              onPolygonComplete={handlePolygonCompleteInternal}
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col lg:flex-row">
+        {/* Listings Section */}
+        <div
+          className={`${
+            showMap ? 'hidden' : 'flex-1'
+          } bg-base-100 overflow-y-auto border-r lg:block lg:w-2/3`}
+        >
+          <Suspense fallback={<div>Loading Listings...</div>}>
+            <Listing
+              listing={listing}
+              loading={loading}
+              handleSearchClick={handleSearchClickInternal}
             />
-          ) : (
-            <div className="flex items-center justify-center h-full">
-              <p>Enter a location to view the map.</p>
-            </div>
-          )}
+          </Suspense>
+        </div>
+
+        {/* Map Section */}
+        <div
+          className={`${
+            showMap ? 'flex-1' : 'hidden'
+          } bg-base-200 transition-all duration-300 ease-in-out lg:block lg:w-1/3`}
+        >
+          <div className="w-full h-full">
+            {coordinates ? (
+              <GoogleMapSection
+                coordinates={coordinates}
+                listings={listing}
+                onPolygonComplete={handlePolygonCompleteInternal}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <p>Enter a location to view the map.</p>
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>
