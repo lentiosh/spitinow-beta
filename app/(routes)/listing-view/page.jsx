@@ -1,3 +1,4 @@
+// components/ListingMapView.js
 'use client';
 
 import React, { useEffect, useState, Suspense, lazy } from 'react';
@@ -322,69 +323,7 @@ const ListingMapView = () => {
     polygonParam, // Ensure useEffect runs when polygonParam changes
   ]);
 
-  // Listen to popstate events to handle back/forward navigation
-  useEffect(() => {
-    const handlePopState = () => {
-      console.log('Popstate event detected');
-      // Re-initialize the component when popstate is triggered
-      setLoading(true);
-      const reinitialize = async () => {
-        setInputValue(searchTerm);
-        setShowMap(showMapParam === 'true');
-        console.log('showMap set to:', showMapParam === 'true');
-
-        // Parse polygon coordinates from the URL
-        if (polygonParam) {
-          try {
-            const decoded = decodeURIComponent(polygonParam);
-            const parsedCoords = JSON.parse(decoded);
-            setPolygonCoords(parsedCoords);
-            console.log('Parsed polygon coordinates:', parsedCoords);
-            await fetchListings(searchTerm, null, parsedCoords);
-          } catch (error) {
-            console.error('Error parsing polygon coordinates:', error);
-            await fetchListings(searchTerm, null, null);
-          }
-        } else if (searchTerm) {
-          const locationData = await fetchCoordinates(searchTerm);
-          if (locationData) {
-            setCoordinates(locationData.coordinates);
-            console.log('Fetched coordinates:', locationData.coordinates);
-            await fetchListings(searchTerm, locationData.coordinates, null);
-          } else {
-            console.warn('No location data found for search term:', searchTerm);
-            await fetchListings(searchTerm, null, null);
-          }
-        } else {
-          console.log('No search term provided. Fetching all listings.');
-          await fetchListings('', null, null);
-        }
-      };
-
-      reinitialize();
-    };
-
-    window.addEventListener('popstate', handlePopState);
-    console.log('Added popstate event listener.');
-
-    return () => {
-      window.removeEventListener('popstate', handlePopState);
-      console.log('Removed popstate event listener.');
-    };
-  }, [
-    searchTerm,
-    typeParam,
-    minPrice,
-    maxPrice,
-    minBedrooms,
-    maxBedrooms,
-    propertyTypes,
-    addedToSite,
-    radiusParam,
-    polygonParam,
-    fetchListings,
-    fetchCoordinates,
-  ]);
+  // Removed the redundant popstate event listener
 
   // Listen to pageshow event to handle BFCache reloads
   useEffect(() => {
