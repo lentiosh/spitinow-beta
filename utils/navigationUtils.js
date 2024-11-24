@@ -1,4 +1,6 @@
+// utils/navigationUtils.js
 import { useEffect } from 'react';
+import useStore from '../store/store';
 
 export const isMobileBrowser = () => {
   if (typeof window === 'undefined') return false;

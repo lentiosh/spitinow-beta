@@ -1,21 +1,22 @@
 // components/ListingMapView.js
 'use client';
 
-import React, { useEffect, useState, Suspense, lazy } from 'react';
+import React, { useEffect, useState, Suspense, lazy,} from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { supabase } from '@/utils/supabase/client';
 import dynamic from 'next/dynamic';
 import { Loader } from '@googlemaps/js-api-loader';
 import * as turf from '@turf/turf';
+import useStore from '../../../store/store';
 
 const GoogleMapSection = dynamic(
-  () => import('@/components/google/GoogleMapSection'),
+  () => import('../../../components/google/GoogleMapSection'),
   {
     ssr: false,
   }
 );
 
-const Listing = lazy(() => import('@/components/listing_view/Listing'));
+const Listing = lazy(() => import('../../../components/listing_view/Listing'));
 
 const ListingMapView = () => {
   const router = useRouter();
@@ -35,15 +36,22 @@ const ListingMapView = () => {
   const polygonParam = searchParams.get('polygon') || '';
   const showMapParam = searchParams.get('showMap') || 'false';
 
-  const [listing, setListing] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [inputValue, setInputValue] = useState(searchTerm);
-  const [showMap, setShowMap] = useState(showMapParam === 'true');
-  const [coordinates, setCoordinates] = useState(null);
-  const [propertyType, setPropertyType] = useState(typeParam);
-
-  // State to keep track of the drawn polygon coordinates
-  const [polygonCoords, setPolygonCoords] = useState(null);
+  const {
+    listing,
+    setListing,
+    loading,
+    setLoading,
+    inputValue,
+    setInputValue,
+    showMap,
+    toggleShowMap,
+    coordinates,
+    setCoordinates,
+    propertyType,
+    setPropertyType,
+    polygonCoords,
+    setPolygonCoords,
+  } = useStore();
 
   // Function to fetch coordinates based on address
   const fetchCoordinates = async (address) => {
@@ -273,7 +281,8 @@ const ListingMapView = () => {
   const initialize = async () => {
     console.log('Initializing data fetching...');
     setInputValue(searchTerm);
-    setShowMap(showMapParam === 'true');
+    setPropertyType(typeParam);
+    toggleShowMap(showMapParam === 'true');
     console.log('showMap set to:', showMapParam === 'true');
 
     // Parse polygon coordinates from the URL
@@ -323,8 +332,6 @@ const ListingMapView = () => {
     polygonParam, // Ensure useEffect runs when polygonParam changes
   ]);
 
-  // Removed the redundant popstate event listener
-
   // Listen to pageshow event to handle BFCache reloads
   useEffect(() => {
     const handlePageShow = (event) => {
@@ -344,7 +351,7 @@ const ListingMapView = () => {
     };
   }, []);
 
-  const handleSearchClick = async () => {
+  const handleSearchClickInternal = async () => {
     const term = inputValue.trim();
     console.log('Handle search click with term:', term);
     if (!term) return;
@@ -379,7 +386,7 @@ const ListingMapView = () => {
     // The component will re-render with new searchParams
   };
 
-  const handlePolygonComplete = (coords) => {
+  const handlePolygonCompleteInternal = (coords) => {
     console.log('Polygon completed with coordinates:', coords);
     setPolygonCoords(coords);
     fetchListings(searchTerm, null, coords);
@@ -420,7 +427,7 @@ const ListingMapView = () => {
       <div className="lg:hidden sticky top-0 z-20 bg-base-100 border-b p-2">
         <button
           className="btn btn-outline w-full"
-          onClick={() => setShowMap(!showMap)}
+          onClick={() => toggleShowMap()}
         >
           {showMap ? 'Show Listings' : 'Show Map'}
         </button>
@@ -436,11 +443,7 @@ const ListingMapView = () => {
           <Listing
             listing={listing}
             loading={loading}
-            inputValue={inputValue}
-            setInputValue={setInputValue}
-            handleSearchClick={handleSearchClick}
-            setCoordinates={setCoordinates}
-            propertyType={propertyType}
+            handleSearchClick={handleSearchClickInternal}
           />
         </Suspense>
       </div>
@@ -456,8 +459,7 @@ const ListingMapView = () => {
             <GoogleMapSection
               coordinates={coordinates}
               listings={listing}
-              onPolygonComplete={handlePolygonComplete}
-              initialPolygonCoords={polygonCoords} // Pass initial polygon coords to the map component
+              onPolygonComplete={handlePolygonCompleteInternal}
             />
           ) : (
             <div className="flex items-center justify-center h-full">

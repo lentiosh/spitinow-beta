@@ -1,42 +1,41 @@
-'use client'
-import React, { useState, Suspense, useCallback } from 'react';
+// components/Hero.js
+'use client';
+
+import React, { Suspense, memo } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, MapPin } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import SkeletonScreen from './SkeletonScreen';
+import useStore from '../../store/store';
 
-const GoogleAddressSearch = dynamic(() => import('../google/GoogleAddressSearch'), {
+const GoogleAddressSearch = dynamic(() => import('../../components/google/GoogleAddressSearch'), {
   suspense: true,
   loading: () => <SkeletonScreen height="44px" className="rounded-full" />
 });
 
-const PropertiesFilter = dynamic(() => import('../listing_view/PropertiesFilter'), {
+const PropertiesFilter = dynamic(() => import('../..//components/listing_view/PropertiesFilter'), {
   suspense: true,
   loading: () => <SkeletonScreen height="400px" className="rounded-2xl" />
 });
 
 const Hero = () => {
   const router = useRouter();
-  const [searchedAddress, setSearchedAddress] = useState(null);
-  const [inputValue, setInputValue] = useState('');
-  const [propertyType, setPropertyType] = useState('Rent');
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const {
+    inputValue,
+    setInputValue,
+    propertyType,
+    setPropertyType,
+    openFilter, // Function to open filter modal
+  } = useStore();
 
-  const handleSearchClick = useCallback(() => {
+  const handleSearchClick = React.useCallback(() => {
     if (!inputValue) {
       alert('Please enter a location');
       return;
     }
-    setIsFilterOpen(true);
-  }, [inputValue]);
-
-  const closeFilterModal = useCallback(() => {
-    setIsFilterOpen(false);
-  }, []);
-
-  const handlePropertyTypeChange = useCallback((value) => {
-    setPropertyType(value);
-  }, []);
+    // Open the filter modal instead of navigating
+    openFilter();
+  }, [inputValue, openFilter]);
 
   return (
     <div className="relative min-h-screen ">
@@ -69,7 +68,7 @@ const Hero = () => {
                     name="type"
                     value="Rent"
                     checked={propertyType === 'Rent'}
-                    onChange={(e) => handlePropertyTypeChange(e.target.value)}
+                    onChange={(e) => setPropertyType(e.target.value)}
                     className="absolute opacity-0 w-full h-full cursor-pointer"
                   />
                   <span className={`px-4 py-2 rounded-full transition-colors ${
@@ -86,7 +85,7 @@ const Hero = () => {
                     name="type"
                     value="Sell"
                     checked={propertyType === 'Sell'}
-                    onChange={(e) => handlePropertyTypeChange(e.target.value)}
+                    onChange={(e) => setPropertyType(e.target.value)}
                     className="absolute opacity-0 w-full h-full cursor-pointer"
                   />
                   <span className={`px-4 py-2 rounded-full transition-colors ${
@@ -106,8 +105,8 @@ const Hero = () => {
                   <Suspense fallback={<SkeletonScreen />}>
                     <GoogleAddressSearch
                       selectedAddress={(address) => {
-                        setSearchedAddress(address);
                         setInputValue(address.description);
+                        // Optionally set coordinates if needed
                       }}
                       inputValue={inputValue}
                       setInputValue={setInputValue}
@@ -130,18 +129,18 @@ const Hero = () => {
       </div>
 
       {/* Properties Filter Modal */}
-      {isFilterOpen && (
-        <Suspense fallback={<SkeletonScreen height="400px" className="rounded-2xl" />}>
-          <PropertiesFilter
-            isOpen={isFilterOpen}
-            onClose={closeFilterModal}
-            location={inputValue}
-            propertyType={propertyType}
-          />
-        </Suspense>
-      )}
+      <Suspense fallback={<SkeletonScreen height="400px" className="rounded-2xl" />}>
+        <PropertiesFilter
+          isOpen={useStore((state) => state.isFilterOpen)}
+          onClose={() => useStore.getState().closeFilter()}
+          location={inputValue}
+          propertyType={propertyType}
+          initialFilters={useStore((state) => state.filters)}
+          onFiltersApplied={() => useStore.getState().closeFilter()}
+        />
+      </Suspense>
     </div>
   );
 };
 
-export default Hero;
+export default memo(Hero);
