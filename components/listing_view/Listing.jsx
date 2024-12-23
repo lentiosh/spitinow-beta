@@ -1,7 +1,6 @@
-// components/listing_view/Listing.jsx
 'use client';
 
-import React, { useMemo, useRef, useEffect, memo, useCallback } from 'react';
+import React, { useState, useCallback, useMemo, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { 
@@ -14,13 +13,14 @@ import {
   ChevronLeft, 
   ChevronRight,
   Share2,
+  Plus,
+  Minus,
   Grid,
   List,
   SlidersHorizontal
 } from 'lucide-react';
 import GoogleAddressSearch from '../google/GoogleAddressSearch';
 import PropertiesFilter from './PropertiesFilter';
-import useStore from '../../store/store'; // Ensure the path is correct
 
 const PriceFormatter = new Intl.NumberFormat('el-GR', {
   style: 'currency',
@@ -29,8 +29,8 @@ const PriceFormatter = new Intl.NumberFormat('el-GR', {
 });
 
 const ImageCarousel = React.memo(({ images, address }) => {
-  const [currentIndex, setCurrentIndex] = React.useState(0);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
   const handlePrevious = (e) => {
     e.stopPropagation();
@@ -189,41 +189,48 @@ const ListingCard = React.memo(({ item, onClick, onLike, isLiked }) => {
   );
 });
 
-const Listing = React.memo(() => {
+const Listing = React.memo(({
+  listing = [],
+  loading = false,
+  inputValue = '',
+  setInputValue,
+  handleSearchClick,
+  setCoordinates,
+  initialFilters = {},
+  onFiltersApplied,
+  propertyType,
+}) => {
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+  const [likedListings, setLikedListings] = useState(new Set());
+  const [sortBy, setSortBy] = useState('default');
   const router = useRouter();
-  const {
-    viewMode,
-    setViewMode,
-    likedListings,
-    toggleLike,
-    inputValue,
-    setInputValue,
-    propertyType,
-    setPropertyType,
-    filters,
-    setCoordinates,
-    isFilterOpen,
-    closeFilter,
-    resetFilters,
-    listing,
-    setListing,
-    loading,
-    setLoading,
-    polygonCoords,
-    setPolygonCoords,
-    openFilter, // Destructure openFilter from the store
-  } = useStore();
-
   const listingsRef = useRef(null);
 
-  // Initialize liked listings from localStorage
+  // Handle liked listings persistence
   useEffect(() => {
-    useStore.getState().initializeLikes();
+    const savedLikes = localStorage.getItem('likedListings');
+    if (savedLikes) {
+      setLikedListings(new Set(JSON.parse(savedLikes)));
+    }
+  }, []);
+
+  const handleLike = useCallback((id) => {
+    setLikedListings(prev => {
+      const newLikes = new Set(prev);
+      if (newLikes.has(id)) {
+        newLikes.delete(id);
+      } else {
+        newLikes.add(id);
+      }
+      localStorage.setItem('likedListings', JSON.stringify([...newLikes]));
+      return newLikes;
+    });
   }, []);
 
   const sortedListings = useMemo(() => {
     let sorted = [...listing];
-    switch (filters.sortBy) {
+    switch (sortBy) {
       case 'price-asc':
         return sorted.sort((a, b) => a.price - b.price);
       case 'price-desc':
@@ -235,7 +242,7 @@ const Listing = React.memo(() => {
       default:
         return sorted;
     }
-  }, [listing, filters.sortBy]);
+  }, [listing, sortBy]);
 
   const handleListingClick = useCallback((id) => {
     router.push(`/listing-view/${id}`);
@@ -283,7 +290,7 @@ const Listing = React.memo(() => {
                 </button>
               </div>
               <button
-                onClick={() => openFilter()} // Correctly use openFilter from the store
+                onClick={() => setIsFilterOpen(true)}
                 className="
                   flex items-center gap-2
                   px-4 py-2
@@ -319,7 +326,7 @@ const Listing = React.memo(() => {
               />
             </div>
             <button
-              onClick={() => openFilter()} // Correctly use openFilter from the store
+              onClick={handleSearchClick}
               className="
                 px-6 py-3.5
                 bg-primary
@@ -346,8 +353,8 @@ const Listing = React.memo(() => {
             {sortedListings.length} ακίνητα βρέθηκαν
           </span>
           <select
-            value={filters.sortBy || 'default'}
-            onChange={(e) => useStore.getState().setFilters({ sortBy: e.target.value })}
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
             className="text-sm border-0 bg-transparent font-medium text-gray-700 focus:ring-0 cursor-pointer"
             aria-label="Sort listings"
           >
@@ -395,7 +402,7 @@ const Listing = React.memo(() => {
                 key={item.id}
                 item={item}
                 onClick={() => handleListingClick(item.id)}
-                onLike={toggleLike}
+                onLike={handleLike}
                 isLiked={likedListings.has(item.id)}
               />
             ))}
@@ -423,17 +430,17 @@ const Listing = React.memo(() => {
       {/* Filter Modal */}
       <PropertiesFilter
         isOpen={isFilterOpen}
-        onClose={() => closeFilter()}
+        onClose={() => setIsFilterOpen(false)}
         location={inputValue}
         propertyType={propertyType}
-        initialFilters={filters}
-        onFiltersApplied={() => closeFilter()}
+        initialFilters={initialFilters}
+        onFiltersApplied={onFiltersApplied}
       />
 
       {/* Floating Search Button for Mobile */}
       <div className="sm:hidden fixed bottom-6 right-6">
         <button
-          onClick={() => openFilter()}
+          onClick={() => setIsFilterOpen(true)}
           className="
             w-14 h-14
             flex items-center justify-center

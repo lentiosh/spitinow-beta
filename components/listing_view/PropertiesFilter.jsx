@@ -1,9 +1,8 @@
-// components/listing_view/PropertiesFilter.js
 'use client';
 
 import React, { useState, useEffect, useCallback, memo } from 'react';
+import { useRouter } from 'next/navigation';
 import { X, Minus, MapPin, Calendar, Home } from 'lucide-react';
-import useStore from '../../store/store';
 
 const PropertyTypeCheckbox = memo(({ type, checked, onChange }) => (
   <label className="relative flex items-center justify-between w-full p-4 cursor-pointer border rounded-2xl group hover:border-[#FF385C] transition-colors">
@@ -44,24 +43,46 @@ const PropertiesFilter = ({
   location,
   propertyType,
   initialFilters = {},
-  onFiltersApplied,
 }) => {
-  const { filters, setFilters, resetFilters } = useStore();
+  const router = useRouter();
+
+  // State management
+  const [filters, setFilters] = useState({
+    radius: initialFilters.radius || '0',
+    minPrice: initialFilters.minPrice || '',
+    maxPrice: initialFilters.maxPrice || '',
+    selectedPropertyTypes: initialFilters.propertyTypes
+      ? initialFilters.propertyTypes.split(',')
+      : [],
+    minBedrooms: initialFilters.minBedrooms || '',
+    maxBedrooms: initialFilters.maxBedrooms || '',
+    addedToSite: initialFilters.addedToSite || 'Anytime',
+  });
 
   const handleFilterChange = useCallback((key, value) => {
-    setFilters({ [key]: value });
-  }, [setFilters]);
+    setFilters((prev) => ({ ...prev, [key]: value }));
+  }, []);
 
   const handlePropertyTypeToggle = useCallback((type) => {
-    const updatedTypes = filters.selectedPropertyTypes.includes(type)
-      ? filters.selectedPropertyTypes.filter((t) => t !== type)
-      : [...filters.selectedPropertyTypes, type];
-    setFilters({ selectedPropertyTypes: updatedTypes });
-  }, [filters.selectedPropertyTypes, setFilters]);
+    setFilters((prev) => ({
+      ...prev,
+      selectedPropertyTypes: prev.selectedPropertyTypes.includes(type)
+        ? prev.selectedPropertyTypes.filter((t) => t !== type)
+        : [...prev.selectedPropertyTypes, type],
+    }));
+  }, []);
 
   const handleClearFilters = useCallback(() => {
-    resetFilters();
-  }, [resetFilters]);
+    setFilters({
+      radius: '0',
+      minPrice: '',
+      maxPrice: '',
+      selectedPropertyTypes: [],
+      minBedrooms: '',
+      maxBedrooms: '',
+      addedToSite: 'Anytime',
+    });
+  }, []);
 
   const handleSearch = useCallback(() => {
     if (!location) {
@@ -83,12 +104,9 @@ const PropertiesFilter = ({
       ...(filters.addedToSite !== 'Anytime' && { addedToSite: filters.addedToSite }),
     });
 
-    // Update the URL and handle polygon if necessary
-    useStore.getState().setPolygonCoords(null); // Reset polygon if search is performed via filters
-
-    window.location.href = `/listing-view?${params.toString()}`;
+    router.push(`/listing-view?${params.toString()}`);
     onClose();
-  }, [location, propertyType, filters, onClose]);
+  }, [location, propertyType, filters, router, onClose]);
 
   // Handle body scroll lock
   useEffect(() => {
